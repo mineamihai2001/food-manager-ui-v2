@@ -42,6 +42,15 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
+                name="ingredients"
+                options={{
+                    title: "Ingredients",
+                    tabBarIcon: ({ color, focused, size }) => {
+                        return <Feather name="shopping-cart" size={26} color={color} />;
+                    },
+                }}
+            />
+            <Tabs.Screen
                 name="settings"
                 options={{
                     title: "Settings",

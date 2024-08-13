@@ -1,4 +1,5 @@
-import { Ingredient } from "./ingredient.mode";
+import { IngredientDetails } from "./ingredient-details.model";
+import { Ingredient } from "./ingredient.model";
 
 export interface Dish {
     id: string;
@@ -8,5 +9,5 @@ export interface Dish {
     rating: number;
     images: string[];
     steps: string[];
-    ingredients: Ingredient[];
+    ingredients: IngredientDetails[];
 }

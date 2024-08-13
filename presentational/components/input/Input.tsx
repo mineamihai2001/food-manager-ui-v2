@@ -1,49 +1,62 @@
 import { FC, useState } from "react";
-import { Text, TextInput, TextInputProps, View } from "react-native";
+import { Text, View } from "react-native";
+import { HelperText, TextInput } from "react-native-paper";
+import { Props as TextInputProps } from "react-native-paper/lib/typescript/components/TextInput/TextInput";
+import { useColors } from "../../../infrastructure/hooks";
 
 type IProps = {
     className?: string;
     label?: string;
-    rightIcon?: React.JSX.Element;
     disabled?: boolean;
     focused?: boolean;
+    errorMessage?: string;
+    showError?: boolean;
+    required?: boolean;
 } & TextInputProps;
 
 export const Input: FC<IProps> = ({
     focused: defaultFocused,
     className,
     disabled,
-    rightIcon,
+    label,
+    errorMessage,
+    showError = false,
+    required = false,
     ...other
 }) => {
-    const [focused, setFocused] = useState<boolean>();
+    const colors = useColors();
 
     return (
-        <View className="flex justify-center gap-1 relative">
-            {other.label && typeof defaultFocused !== "undefined" ? (
-                <Text className={`font-bold ${defaultFocused ? "text-primary-2" : ""}`}>
-                    {other.label}
-                </Text>
-            ) : (
-                <Text className={`font-bold ${focused ? "text-primary-2" : ""}`}>
-                    {other.label}
-                </Text>
+        <View className="flex justify-center relative">
+            {label && (
+                <View className="flex flex-row">
+                    <Text className={`font-bold`}>{label}</Text>
+                    {required && <Text className={`font-bold text-danger-2`}>*</Text>}
+                </View>
             )}
             <TextInput
+                mode="flat"
                 editable={!disabled}
                 selectTextOnFocus={!disabled}
-                onFocus={(e) => setFocused(true)}
-                onBlur={(e) => setFocused(false)}
-                className={`peer border-[1.3px] border-neutral-3 focus:border-primary-2 rounded-lg 
-                            px-4 py-2
-                            ${disabled ? "bg-neutral-1 border-neutral-2" : ""}
+                disabled={disabled}
+                theme={{
+                    colors: {
+                        background: colors.neutral[1],
+                        surfaceVariant: colors.neutral[1],
+                        primary: colors.neutral[10],
+                    },
+                }}
+                underlineColor="transparent"
+                className={`peer rounded-lg
+                            ${disabled ? "bg-neutral-1" : ""}
                             ${className}`}
+                // ${showError ? "border border-red-500" : "border border-transparent"}
                 {...other}
             />
-            {rightIcon && (
-                <View className="h-full absolute flex justify-center items-center right-2">
-                    {rightIcon}
-                </View>
+            {errorMessage && (
+                <HelperText type="error" visible={showError}>
+                    {errorMessage}
+                </HelperText>
             )}
         </View>
     );

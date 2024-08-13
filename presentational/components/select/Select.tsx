@@ -18,7 +18,7 @@ export const Select: FC<IProps> = (props) => {
     return (
         <Pressable
             className={`
-        border bg-neutral-0 border-neutral-10
+        border-2 bg-neutral-0 border-neutral-10
         px-2 py-1 rounded-md
         flex flex-row justify-center items-center
         ${props.disabled ? "bg-neutral-2 border-neutral-4" : ""} ${className}`}

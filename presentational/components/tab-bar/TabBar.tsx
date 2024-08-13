@@ -12,7 +12,7 @@ export const TabBar = (props: BottomTabBarProps) => {
 
     const colors = useColors();
 
-    const activeTabColor = colors.primary[2];
+    const activeTabColor = colors.neutral[10];
     const inactiveTabColor = colors.neutral[4];
 
     useEffect(() => {
@@ -37,13 +37,14 @@ export const TabBar = (props: BottomTabBarProps) => {
         show && (
             <View
                 className="absolute bottom-[20]
-            flex-row justify-between items-center
-            bg-neutral-0 mx-[20] py-[15] rounded-[25px] shadow shadow-neutral-10"
+                        flex-row justify-between items-center
+                        bg-neutral-0 mx-[20] py-[10] rounded-[25px] shadow shadow-neutral-10"
                 style={{
                     borderCurve: "continuous",
                     shadowOffset: { width: 0, height: 10 },
                     shadowRadius: 10,
                     shadowOpacity: 0.1,
+                    // gap: 20,
                 }}
             >
                 {state.routes.map((route, index: number) => {
@@ -87,7 +88,7 @@ export const TabBar = (props: BottomTabBarProps) => {
                             routeName={route.name}
                             color={isFocused ? activeTabColor : inactiveTabColor}
                             label={label as string}
-                            showLabel={true}
+                            showLabel={false}
                             tabBarIcon={options.tabBarIcon}
                         />
                     );

@@ -1,6 +1,5 @@
 import { HttpStatus } from "../../../domain/http-status.enum";
-import { Dish } from "../../../domain/models";
-import { Ingredient } from "../../../domain/models/ingredient.mode";
+import { Dish, Page, Sort, Unit } from "../../../domain/models";
 
 export class DishesService {
     private readonly dishesUrl: string;
@@ -29,8 +28,8 @@ export class DishesService {
         kitchenId: string,
         page: number,
         pageSize: number,
-        sort: -1 | 0 | 1 = 0
-    ): Promise<Dish[]> {
+        sort: Sort = Sort.DESCENDING // latest first
+    ): Promise<Page<Dish>> {
         return fetch(
             `${this.dishesUrl}/${kitchenId}/query/?page=${page}&pageSize=${pageSize}&sort=${sort}`,
             {
@@ -38,7 +37,7 @@ export class DishesService {
             }
         )
             .then((res) => res.json())
-            .then((res: Dish[]) => res);
+            .then((res: Page<Dish>) => res);
     }
 
     public async getRandom(kitchenId: string): Promise<Dish> {
@@ -63,14 +62,28 @@ export class DishesService {
         }).then((res) => res.status === HttpStatus.OK);
     }
 
+    public async deleteMany(kitchenId: string, ids: string[]): Promise<boolean> {
+        const promises = ids.map((id) => this.delete(kitchenId, id));
+
+        const result = await Promise.all(promises);
+
+        const err = result.find((i) => i === false);
+
+        return typeof err !== "undefined" || err === false ? false : true;
+    }
+
     public async create(
         kitchenId: string,
         name: string,
         duration: number,
         images: string[],
         steps: string[],
-        ingredients: Ingredient[]
-    ): Promise<Dish> {
+        ingredients: {
+            id: string;
+            unit: Unit;
+            size: number;
+        }[]
+    ): Promise<Dish | null> {
         return fetch(`${this.dishesUrl}/${kitchenId}`, {
             method: "POST",
             body: JSON.stringify({
@@ -79,10 +92,15 @@ export class DishesService {
                 images,
                 rating: 0,
                 steps,
-                ingredientIds: ingredients.map((i) => i.id),
+                ingredients,
             }),
+            headers: {
+                "Content-Type": "application/json",
+            },
         })
-            .then((res) => res.json())
+            .then((res) => {
+                return res.status !== 200 ? null : res.json();
+            })
             .then((res: Dish) => res);
     }
 }

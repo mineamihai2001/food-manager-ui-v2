@@ -22,8 +22,10 @@ export const TabBarButton = (props: IProps) => {
     const { isFocused, label, color, showLabel = false, tabBarIcon = () => <></> } = props;
 
     return (
-        <Pressable {...props} className="flex-1 justify-center items-center gap-1">
-            <View>{tabBarIcon({ color, focused: isFocused, size: 26 })}</View>
+        <Pressable {...props} className={`flex-1 justify-center items-center gap-1`}>
+            <View className={`rounded-md p-2 ${isFocused ? "" : "border-neutral-0"} `}>
+                {tabBarIcon({ color, focused: isFocused, size: 26 })}
+            </View>
             {showLabel && (
                 <Text
                     style={[

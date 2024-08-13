@@ -31,9 +31,9 @@ export const Step: FC<IProps> = ({ step, toggleDone }) => {
                         </View>
                     </Pressable>
                 ) : (
-                    <Pressable className="ml-auto mr-4 rounded-full p-1 bg-neutral-0 border border-neutral-3">
-                        <View className="w-[20] h-[20]"></View>
-                    </Pressable>
+                    <View className="ml-auto w-[28] h-[28] mr-4 rounded-full p-1 bg-neutral-0 border border-neutral-3">
+                        {/* <View className="w-[20] h-[20]"></View> */}
+                    </View>
                 )}
             </View>
         </Pressable>

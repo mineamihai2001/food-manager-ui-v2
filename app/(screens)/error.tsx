@@ -33,7 +33,7 @@ const Error: FC<IProps> = ({}) => {
                 </View>
                 <View className="flex justify-center items-center mt-4">
                     <Button
-                        type="outlined"
+                        mode="outlined"
                         onPress={() => {
                             try {
                                 router.back();

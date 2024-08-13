@@ -1,4 +1,4 @@
-import { makeObservable, observable } from "mobx";
+import { makeObservable, observable, runInAction } from "mobx";
 import { IStorageService } from "../../domain/services";
 import { Kitchen } from "../../domain/models";
 
@@ -27,7 +27,9 @@ export class GlobalStore {
     }
 
     public async setKitchen(kitchenId: Kitchen): Promise<void> {
-        this.kitchen = kitchenId;
+        runInAction(() => {
+            this.kitchen = kitchenId;
+        });
 
         await this.storageService.setItem("kitchenId", JSON.stringify(kitchenId));
     }

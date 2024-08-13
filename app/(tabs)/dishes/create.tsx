@@ -1,32 +1,34 @@
 import { FC, useEffect, useState } from "react";
 import {
+    GestureResponderEvent,
     Keyboard,
-    Pressable,
-    RefreshControl,
+    KeyboardAvoidingView,
     ScrollView,
-    Text,
-    TouchableOpacity,
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import { Dish } from "../../../domain/models";
 import { useColors } from "../../../infrastructure/hooks";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { DishesService } from "../../../infrastructure/services/dishes";
 import { inject, observer } from "mobx-react";
 import { GlobalStore } from "../../../infrastructure/store";
-import { BackButton, Button, Chip, IconButton, Input } from "../../../presentational/components";
-import { Ingredient } from "../../../domain/models/ingredient.mode";
+import { BackButton, IconButton, Input } from "../../../presentational/components";
 import { Feather } from "@expo/vector-icons";
-import { IngredientsService } from "../../../infrastructure/services/ingredients";
-import { IngredientsForm } from "../../../presentational/app/dishes";
+import {
+    DurationForm,
+    ImagesForm,
+    IngredientsForm,
+    StepsForm,
+} from "../../../presentational/app/dishes";
+import { IngredientDetails, Unit } from "../../../domain/models";
+import { Snackbar } from "react-native-paper";
 
 interface IProps {
     globalStore?: GlobalStore;
 }
 
 const CreateDish: FC<IProps> = inject("globalStore")(
-    observer(({ globalStore }) => {
+    observer(({ globalStore }: IProps) => {
         const colors = useColors();
 
         const dishesService = new DishesService();
@@ -38,21 +40,21 @@ const CreateDish: FC<IProps> = inject("globalStore")(
         const [minutes, setMinutes] = useState<string>("");
         const [images, setImages] = useState<string[]>([]);
         const [steps, setSteps] = useState<string[]>([]);
-        const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+        const [ingredients, setIngredients] = useState<IngredientDetails[]>([]);
 
-        const [durationFocused, setDurationFocused] = useState<boolean>(false);
-        const [stepsFocused, setStepsFocused] = useState<boolean>(false);
+        const [scrollEnabled, setScrollEnabled] = useState<boolean>(true);
+        const [message, setMessage] = useState<string | null>(null);
+        const [errors, setErrors] = useState<{
+            name: boolean;
+            duration: boolean;
+            ingredients: boolean;
+        }>({
+            name: false,
+            duration: false,
+            ingredients: false,
+        });
 
-        const handleRefresh = async () => {
-            setRefreshing(true);
-            setName((_) => "");
-            setHours((_) => "");
-            setMinutes((_) => "");
-            setImages((_) => []);
-            setSteps((_) => []);
-            setIngredients((_) => []);
-            setRefreshing((_) => false);
-        };
+        const [blur, setBlur] = useState<boolean>(false);
 
         const handleAddStep = () => {
             setSteps((_) => [...steps, ""]);
@@ -63,22 +65,67 @@ const CreateDish: FC<IProps> = inject("globalStore")(
         };
 
         const handleCreate = async () => {
+            let errs: {
+                name?: boolean;
+                duration?: boolean;
+                ingredients?: boolean;
+            } = {};
+            if (!name) {
+                errs = {
+                    ...errs,
+                    name: true,
+                };
+            }
+            if (!hours || !minutes) {
+                errs = {
+                    ...errs,
+                    duration: true,
+                };
+            }
+            if (!ingredients.length) {
+                errs = {
+                    ...errs,
+                    ingredients: true,
+                };
+            }
+            if (Object.keys(errs).length) {
+                setErrors({
+                    ...errors,
+                    ...errs,
+                });
+                return;
+            }
+
             const res = await dishesService.create(
                 globalStore?.kitchen.id!,
                 name,
                 (Number(hours) * 60 + Number(minutes)) * 60 * 1000, // value must be in ms
                 images,
                 steps,
-                ingredients.filter((i) => i !== null)
+                ingredients
+                    .filter((i) => i !== null)
+                    .map((i) => ({
+                        id: i.id,
+                        unit: i.unit ?? Unit.Pieces,
+                        size: i.size,
+                    }))
             );
+            if (res === null) {
+                setMessage("Error creating dish");
+                return;
+            }
+
+            setMessage("Dish created");
+
             router.back();
         };
 
-        const handleBlurIngredients = () => {
+        const handleBlurIngredients = (e: GestureResponderEvent) => {
             Keyboard.dismiss();
+            setBlur(true);
         };
 
-        const handleAddIngredient = (ingredient: Ingredient) => {
+        const handleAddIngredient = (ingredient: IngredientDetails) => {
             setIngredients((_) => [...ingredients, ingredient]);
         };
 
@@ -86,121 +133,117 @@ const CreateDish: FC<IProps> = inject("globalStore")(
             setIngredients(ingredients.filter((_, i) => i !== index));
         };
 
+        const handleUpdateIngredient = (index: number, ingredient: IngredientDetails) => {
+            const copy = [...ingredients];
+            copy[index] = ingredient;
+            setIngredients(copy);
+        };
+
+        const handleDismissSnack = () => {
+            setMessage(null);
+        };
+
+        useEffect(() => {
+            if (!errors.name) return;
+            setErrors({
+                ...errors,
+                name: false,
+            });
+        }, [name]);
+
+        useEffect(() => {
+            if (!errors.duration) return;
+            setErrors({
+                ...errors,
+                duration: false,
+            });
+        }, [hours, minutes]);
+
+        useEffect(() => {
+            if (!errors.ingredients) return;
+            setErrors({
+                ...errors,
+                ingredients: false,
+            });
+        }, [ingredients]);
+
         return (
             <TouchableWithoutFeedback onPress={handleBlurIngredients}>
-                <View className="h-full">
-                    <View
-                        style={{
+                <View>
+                    <ScrollView
+                        className="w-full"
+                        contentContainerStyle={{
                             display: "flex",
-                            justifyContent: "flex-start",
+                            justifyContent: "center",
                             gap: 40,
-                            paddingBottom: 140,
+                            paddingBottom: 240,
                             paddingTop: 100,
                         }}
+                        scrollEnabled={scrollEnabled}
                     >
                         <BackButton />
-                        <View
-                            className="px-8 flex bg-neutral-0 rounded-2xl py-8 pb-10 shadow shadow-neutral-5"
-                            style={{
-                                gap: 20,
-                            }}
-                        >
+                        <View className="absolute top-10 right-4 z-100">
+                            <View>
+                                <IconButton
+                                    className="w-10 h-10 bg-neutral-10 shadow-sm shadow-neutral-10 rounded-full"
+                                    icon={() => (
+                                        <Feather name="check" size={20} color={colors.neutral[0]} />
+                                    )}
+                                    onPress={handleCreate}
+                                />
+                            </View>
+                        </View>
+                        <KeyboardAvoidingView className="px-8 flex bg-neutral-0 rounded-lg py-8 pb-10 shadow shadow-neutral-5 h-full">
                             <Input
                                 value={name}
                                 onChangeText={setName}
                                 placeholder="Text"
                                 label="Name"
+                                errorMessage={"Name length >= 3"}
+                                required={true}
+                                showError={(() => {
+                                    return errors.name;
+                                })()}
                             />
-                            <View className="flex justify-center gap-1">
-                                <Text
-                                    className={`font-bold ${
-                                        durationFocused ? "text-primary-2" : ""
-                                    }`}
-                                >
-                                    Duration
-                                </Text>
-                                <View className="w-full flex flex-row justify-start items-center">
-                                    <Input
-                                        value={hours}
-                                        onChangeText={setHours}
-                                        placeholder="Hours"
-                                        keyboardType="numeric"
-                                        className="w-20 rounded-r-none border-r-0"
-                                        onFocus={() => setDurationFocused(true)}
-                                        onBlur={() => setDurationFocused(false)}
-                                    />
-                                    <Input
-                                        value={minutes}
-                                        onChangeText={setMinutes}
-                                        placeholder="Min"
-                                        keyboardType="numeric"
-                                        className="w-20 rounded-l-none"
-                                        onFocus={() => setDurationFocused(true)}
-                                        onBlur={() => setDurationFocused(false)}
-                                    />
-                                </View>
-                            </View>
+                            <DurationForm
+                                hours={hours}
+                                setHours={setHours}
+                                minutes={minutes}
+                                setMinutes={setMinutes}
+                                error={(() => {
+                                    return errors.duration;
+                                })()}
+                            />
                             <IngredientsForm
                                 addIngredient={handleAddIngredient}
                                 removeIngredient={handleRemoveIngredient}
+                                updateIngredient={handleUpdateIngredient}
                                 ingredients={ingredients}
+                                blur={blur}
+                                setBlur={setBlur}
+                                error={errors.ingredients}
+                                enableScroll={() => setScrollEnabled(true)}
+                                disableScroll={() => setScrollEnabled(false)}
                             />
-                            <View className="flex justify-center gap-1 z-[-1]">
-                                <Text
-                                    className={`font-bold ${stepsFocused ? "text-primary-2" : ""}`}
-                                >
-                                    Steps
-                                </Text>
-                                <View
-                                    className="flex"
-                                    style={{
-                                        gap: 20,
-                                    }}
-                                >
-                                    {steps.map((step, i) => {
-                                        return (
-                                            <Input
-                                                key={`dish-step-${i}`}
-                                                value={steps[0]}
-                                                onChangeText={() => {}}
-                                                placeholder={`Step ${i + 1}`}
-                                                onFocus={() => setStepsFocused(true)}
-                                                onBlur={() => setStepsFocused(false)}
-                                                rightIcon={
-                                                    <Pressable
-                                                        className="mt-6 "
-                                                        onPress={() => handleRemoveStep(i)}
-                                                    >
-                                                        <Feather
-                                                            name="x"
-                                                            size={20}
-                                                            color={colors.danger[2]}
-                                                        />
-                                                    </Pressable>
-                                                }
-                                            />
-                                        );
-                                    })}
-                                    <Pressable
-                                        className="border-4 border-neutral-3 border-dashed w-full h-10
-                                            flex justify-center items-center"
-                                        onPress={handleAddStep}
-                                    >
-                                        <Feather name="plus" size={28} color={colors.neutral[4]} />
-                                    </Pressable>
-                                </View>
-                            </View>
-                        </View>
-                    </View>
-                    <View className="absolute top-10 right-4 z-100">
-                        <View>
-                            <IconButton
-                                className="w-10 h-10 bg-success-1 shadow-sm shadow-neutral-10"
-                                icon={<Feather name="check" size={20} color={colors.neutral[0]} />}
-                                onPress={handleCreate}
+                            <ImagesForm />
+                            <StepsForm
+                                steps={steps}
+                                handleAddStep={handleAddStep}
+                                handleRemoveStep={handleRemoveStep}
                             />
-                        </View>
-                    </View>
+                        </KeyboardAvoidingView>
+                    </ScrollView>
+                    <Snackbar
+                        className="mb-24"
+                        visible={message !== null}
+                        onDismiss={handleDismissSnack}
+                        action={{
+                            label: "Ok",
+                            onPress: handleDismissSnack,
+                        }}
+                    >
+                        {message}
+                    </Snackbar>
                 </View>
             </TouchableWithoutFeedback>
         );

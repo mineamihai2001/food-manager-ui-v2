@@ -8,6 +8,7 @@ import { KitchensService } from "../infrastructure/services/kitchens";
 import { Kitchen } from "../domain/models";
 import { ErrorContext } from "../infrastructure/context";
 import { ApiError, AppError } from "../infrastructure/error";
+import { PaperProvider, Portal } from "react-native-paper";
 
 SplashScreen.preventAutoHideAsync();
 const globalStore = new GlobalStore(new StorageService());
@@ -30,6 +31,11 @@ export default function Layout() {
             try {
                 const res: Kitchen[] = await kitchenService.getAll();
                 setIsAppReady(true);
+
+                if (typeof res.at(0) === undefined) {
+                    throw new Error("No kitchens found");
+                }
+
                 await globalStore.setKitchen(res.at(0)!); // TODO: change
             } catch (err) {
                 console.log("App is not ready ....", err);
@@ -73,7 +79,7 @@ export default function Layout() {
 
     return (
         <Provider globalStore={globalStore}>
-            <ErrorContext.Provider value={null}>
+            <PaperProvider>
                 <Stack>
                     <Stack.Screen
                         name="(screens)"
@@ -90,7 +96,7 @@ export default function Layout() {
                         }}
                     />
                 </Stack>
-            </ErrorContext.Provider>
+            </PaperProvider>
         </Provider>
     );
 }

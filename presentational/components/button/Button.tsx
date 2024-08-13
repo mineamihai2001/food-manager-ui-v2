@@ -1,46 +1,56 @@
 import { ElementRef, FC, forwardRef } from "react";
-import { Pressable, PressableProps, Text } from "react-native";
+import { Pressable, PressableProps, StyleProp, Text, View, ViewStyle } from "react-native";
 import { Button as PaperButton } from "react-native-paper";
+import { useColors } from "../../../infrastructure/hooks";
+import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
+import { Props as ButtonProps } from "react-native-paper/lib/typescript/components/Button/Button";
 
 type IProps = {
     className?: string;
     children?: React.ReactNode;
-    type?: "default" | "outlined";
-} & PressableProps;
+    mode?: "text" | "outlined" | "contained" | "elevated" | "contained-tonal";
+    icon?: IconSource;
+} & ButtonProps;
 
 export const Button: FC<IProps> = forwardRef((props: IProps, ref) => {
-    const { type = "default" } = props;
-    return type === "default" ? <Default {...props} /> : <Outlined {...props} />;
+    const { mode: type = "contained" } = props;
+    return type === "contained" ? <Default {...props} /> : <Outlined {...props} />;
 });
 
-const Default: FC<IProps> = ({ className, children, type = "default", ...other }) => {
+const Default: FC<IProps> = ({ className, children, ...other }) => {
+    const colors = useColors();
+
     return (
-        <Pressable
-            className={`px-6 py-2 rounded-full bg-primary-2 shadow shadow-neutral-8
-            ${className}`}
-            {...other}
+        <PaperButton
+            className={`rounded-md border-2 ${className}`}
+            buttonColor={colors.neutral[0]}
+            textColor={colors.neutral[10]}
+            mode="contained"
+            style={Object.assign({}, { borderColor: colors.neutral[0] }, other.style)}
+            {...(other as any)}
         >
-            {typeof children === "string" ? (
-                <Text className="text-neutral-0 font-semibold">{children}</Text>
-            ) : (
-                children
-            )}
-        </Pressable>
+            {typeof children === "string" ? <Text className="">{children}</Text> : children}
+        </PaperButton>
     );
 };
 
-const Outlined: FC<IProps> = ({ className, children, type = "default", ...other }) => {
+const Outlined: FC<IProps> = ({ className, children, ...other }) => {
+    const colors = useColors();
+
     return (
-        <Pressable
-            className={`px-6 py-2 rounded-full border border-neutral-4 bg-neutral-0
-            ${className}`}
-            {...other}
+        <PaperButton
+            className={`rounded-md border-2 border-neutral-10 ${className}`}
+            buttonColor={colors.neutral[0]}
+            textColor={colors.neutral[10]}
+            mode="outlined"
+            style={Object.assign({}, { borderColor: colors.neutral[10] }, other.style)}
+            {...(other as any)}
         >
             {typeof children === "string" ? (
                 <Text className="text-neutral-8 font-semibold">{children}</Text>
             ) : (
                 children
             )}
-        </Pressable>
+        </PaperButton>
     );
 };

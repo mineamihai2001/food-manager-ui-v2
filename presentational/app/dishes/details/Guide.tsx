@@ -27,7 +27,7 @@ export const Guide: FC<IProps> = ({ dish }) => {
 
     return (
         <View
-            className="px-4 pt-4 pb-8 bg-neutral-0 rounded-2xl
+            className="px-4 pt-4 pb-8 bg-neutral-0 rounded-lg
                 flex justify-center items-start shadow shadow-neutral-10"
             style={{
                 gap: 10,

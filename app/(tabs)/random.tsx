@@ -100,24 +100,28 @@ const Random: FC<IProps> = inject("globalStore")(
                                         gap: 10,
                                     }}
                                     onPress={() => router.push(`dishes/${dish.id}`)}
+                                    icon={() => (
+                                        <Feather name="info" size={18} color={colors.neutral[10]} />
+                                    )}
                                 >
-                                    <Text className=" font-medium text-neutral-0">Details</Text>
-                                    <Feather name="info" size={18} color={colors.neutral[0]} />
+                                    Details
                                 </Button>
                                 <Button
-                                    type="outlined"
+                                    mode="outlined"
                                     className="mt-10 flex flex-row justify-center items-center"
                                     style={{
                                         gap: 10,
                                     }}
                                     onPress={handleRefresh}
+                                    icon={() => (
+                                        <Feather
+                                            name="refresh-cw"
+                                            size={18}
+                                            color={colors.neutral[10]}
+                                        />
+                                    )}
                                 >
-                                    <Text className="font-medium text-neutral-10">Random</Text>
-                                    <Feather
-                                        name="refresh-cw"
-                                        size={18}
-                                        color={colors.neutral[10]}
-                                    />
+                                    Random
                                 </Button>
                             </View>
                         </View>
